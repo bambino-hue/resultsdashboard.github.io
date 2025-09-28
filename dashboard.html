@@ -1,0 +1,911 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>S-Edge-L Model Performance</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            overflow-x: hidden;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            animation: fadeIn 0.8s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        h1 {
+            text-align: center;
+            color: white;
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+            animation: slideDown 0.6s ease-out;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: rgba(255,255,255,0.9);
+            font-size: 1.1rem;
+            margin-bottom: 40px;
+            animation: slideDown 0.8s ease-out;
+        }
+
+        @keyframes slideDown {
+            from { transform: translateY(-30px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        .category {
+            background: rgba(255,255,255,0.95);
+            border-radius: 20px;
+            padding: 25px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            backdrop-filter: blur(10px);
+            animation: slideUp 0.6s ease-out backwards;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .category:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 50px rgba(0,0,0,0.3);
+        }
+
+        .category:nth-child(2) { animation-delay: 0.1s; }
+        .category:nth-child(3) { animation-delay: 0.2s; }
+        .category:nth-child(4) { animation-delay: 0.3s; }
+        .category:nth-child(5) { animation-delay: 0.4s; }
+
+        @keyframes slideUp {
+            from { transform: translateY(50px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        .category-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 3px solid;
+        }
+
+        .category-icon {
+            width: 45px;
+            height: 45px;
+            margin-right: 15px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+
+        .human-speech .category-header { border-color: #FF6B6B; }
+        .human-speech .category-icon { background: linear-gradient(135deg, #FF6B6B, #FF8E53); }
+
+        .non-speech .category-header { border-color: #4ECDC4; }
+        .non-speech .category-icon { background: linear-gradient(135deg, #4ECDC4, #44A08D); }
+
+        .animal .category-header { border-color: #95E77E; }
+        .animal .category-icon { background: linear-gradient(135deg, #95E77E, #68C3A3); }
+
+        .environmental .category-header { border-color: #A8E6CF; }
+        .environmental .category-icon { background: linear-gradient(135deg, #A8E6CF, #7FD8BE); }
+
+        .urban .category-header { border-color: #FFD93D; }
+        .urban .category-icon { background: linear-gradient(135deg, #FFD93D, #FCB045); }
+
+        .category-title {
+            font-size: 1.4rem;
+            font-weight: 600;
+            color: #2c3e50;
+        }
+
+        .datasets {
+            display: grid;
+            gap: 15px;
+        }
+
+        .dataset {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            border-radius: 15px;
+            padding: 20px;
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr 1fr 1.7fr 1.5fr;
+            gap: 15px;
+            align-items: center;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            cursor: pointer;
+        }
+
+        .dataset::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+            transition: left 0.5s ease;
+        }
+
+        .dataset:hover::before {
+            left: 100%;
+        }
+
+        .dataset:hover {
+            transform: scale(1.02);
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+        }
+
+        .dataset-name {
+            font-weight: 600;
+            color: #2c3e50;
+            font-size: 1.1rem;
+        }
+
+        .stat {
+            text-align: center;
+            padding: 10px;
+            border-radius: 10px;
+            background: rgba(255,255,255,0.8);
+            transition: all 0.3s ease;
+        }
+
+        .stat:hover {
+            background: rgba(255,255,255,1);
+            transform: translateY(-2px);
+            box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+        }
+
+        .stat-label {
+            font-size: 0.75rem;
+            color: #7f8c8d;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 5px;
+        }
+
+        .stat-value {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: #2c3e50;
+        }
+
+        .accuracy-stat {
+            position: relative;
+        }
+
+        .accuracy-bar {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: #e0e0e0;
+            border-radius: 2px;
+            overflow: hidden;
+        }
+
+        .accuracy-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #00d2ff, #3a7bd5);
+            border-radius: 2px;
+            animation: fillBar 1.5s ease-out;
+        }
+
+        @keyframes fillBar {
+            from { width: 0; }
+        }
+
+        .high-accuracy { color: #27ae60; }
+        .medium-accuracy { color: #f39c12; }
+        .low-accuracy { color: #e74c3c; }
+
+        .legend {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            margin-top: 40px;
+            padding: 20px;
+            background: rgba(255,255,255,0.9);
+            border-radius: 15px;
+            animation: fadeIn 1s ease-out 0.5s backwards;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 500;
+            color: #2c3e50;
+        }
+
+        .legend-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+        }
+
+        /* Меню выбора типа изображения */
+        .image-selector {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.8);
+            backdrop-filter: blur(5px);
+            animation: modalFadeIn 0.3s ease-out;
+        }
+
+        .selector-content {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+            animation: modalZoomIn 0.3s ease-out;
+            min-width: 400px;
+            text-align: center;
+        }
+
+        .selector-title {
+            color: white;
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 30px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .selector-buttons {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .selector-btn {
+            background: linear-gradient(135deg, #ffffff, #f0f2f5);
+            border: none;
+            border-radius: 15px;
+            padding: 20px 30px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #2c3e50;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+            min-width: 150px;
+        }
+
+        .selector-btn:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+        }
+
+        .selector-btn:active {
+            transform: translateY(-2px);
+        }
+
+        .selector-close {
+            position: absolute;
+            top: 15px;
+            right: 20px;
+            color: white;
+            font-size: 30px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: color 0.3s ease;
+        }
+
+        .selector-close:hover {
+            color: #ff6b6b;
+        }
+
+        /* Модальное окно */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1001;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.8);
+            backdrop-filter: blur(5px);
+            animation: modalFadeIn 0.3s ease-out;
+        }
+
+        @keyframes modalFadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .modal-content {
+            display: block;
+            margin: 5% auto;
+            max-width: 90%;
+            max-height: 80%;
+            border-radius: 10px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+            animation: modalZoomIn 0.3s ease-out;
+        }
+
+        @keyframes modalZoomIn {
+            from { transform: scale(0.7); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+
+        .modal-close {
+            position: absolute;
+            top: 20px;
+            right: 35px;
+            color: white;
+            font-size: 40px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: color 0.3s ease;
+        }
+
+        .modal-close:hover {
+            color: #ff6b6b;
+        }
+
+        @media (max-width: 768px) {
+            .dataset {
+                grid-template-columns: 1fr;
+                gap: 10px;
+            }
+            
+            .stats-row {
+                display: grid;
+                grid-template-columns: repeat(2, 1fr);
+                gap: 10px;
+            }
+            
+            h1 { font-size: 1.8rem; }
+            .category-title { font-size: 1.2rem; }
+            
+            .modal-close {
+                font-size: 30px;
+                top: 15px;
+                right: 25px;
+            }
+
+            .selector-content {
+                min-width: 300px;
+                padding: 30px 20px;
+            }
+
+            .selector-buttons {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .selector-btn {
+                min-width: 200px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎯 S-Edge-L Model Performance Dashboard</h1>
+        <p class="subtitle">Training Results Across Audio Classification Datasets</p>
+
+        <div class="category human-speech">
+            <div class="category-header">
+                <div class="category-icon">🗣️</div>
+                <h2 class="category-title">Human Speech</h2>
+            </div>
+            <div class="datasets">
+                <div class="dataset">
+                    <div class="dataset-name">Spiking Heidelberg Digits (10)</div>
+                    <div class="stat">
+                        <div class="stat-label">Samples</div>
+                        <div class="stat-value">10,420</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-label">Classes</div>
+                        <div class="stat-value">10</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-label">Hours</div>
+                        <div class="stat-value">4.5</div>
+                    </div>
+                    <div class="stat accuracy-stat">
+                        <div class="stat-label">Exp. Acc</div>
+                        <div class="stat-value high-accuracy">99.8%</div>
+                        <div class="accuracy-bar">
+                            <div class="accuracy-fill" style="width: 99.8%"></div>
+                        </div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-label">3rd Party</div>
+                        <div class="stat-value">—</div>
+                    </div>
+                </div>
+                <div class="dataset">
+                    <div class="dataset-name">Spiking Heidelberg Digits (20)</div>
+                    <div class="stat">
+                        <div class="stat-label">Samples</div>
+                        <div class="stat-value">10,420</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-label">Classes</div>
+                        <div class="stat-value">20</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-label">Hours</div>
+                        <div class="stat-value">4.5</div>
+                    </div>
+                    <div class="stat accuracy-stat">
+                        <div class="stat-label">Exp. Acc</div>
+                        <div class="stat-value high-accuracy">96.9%</div>
+                        <div class="accuracy-bar">
+                            <div class="accuracy-fill" style="width: 96.9%"></div>
+                        </div>
+                    </div>
+                    <div class="stat accuracy-stat">
+                        <div class="stat-label">3rd Party</div>
+                        <div class="stat-value high-accuracy">96.26%</div>
+                        <div class="accuracy-bar">
+                            <div class="accuracy-fill" style="width: 96.26%"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="dataset">
+                    <div class="dataset-name">EmoDB</div>
+                    <div class="stat">
+                        <div class="stat-label">Samples</div>
+                        <div class="stat-value">535</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-label">Classes</div>
+                        <div class="stat-value">6</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-label">Hours</div>
+                        <div class="stat-value">0.41</div>
+                    </div>
+                    <div class="stat accuracy-stat">
+                        <div class="stat-label">Exp. Acc</div>
+                        <div class="stat-value medium-accuracy">62.2%</div>
+                        <div class="accuracy-bar">
+                            <div class="accuracy-fill" style="width: 62.2%"></div>
+                        </div>
+                    </div>
+                    <div class="stat accuracy-stat">
+                        <div class="stat-label">3rd Party</div>
+                        <div class="stat-value high-accuracy">90.2%</div>
+                        <div class="accuracy-bar">
+                            <div class="accuracy-fill" style="width: 90.2%"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="category non-speech">
+            <div class="category-header">
+                <div class="category-icon">🎵</div>
+                <h2 class="category-title">Human Non-Speech Sounds</h2>
+            </div>
+            <div class="datasets">
+                <div class="dataset">
+                    <div class="dataset-name">Nonspeech7k</div>
+                    <div class="stat">
+                        <div class="stat-label">Samples</div>
+                        <div class="stat-value">7,014</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-label">Classes</div>
+                        <div class="stat-value">7</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-label">Hours</div>
+                        <div class="stat-value">6.75</div>
+                    </div>
+                    <div class="stat accuracy-stat">
+                        <div class="stat-label">Exp. Acc</div>
+                        <div class="stat-value medium-accuracy">79.8%</div>
+                        <div class="accuracy-bar">
+                            <div class="accuracy-fill" style="width: 79.8%"></div>
+                        </div>
+                    </div>
+                    <div class="stat accuracy-stat">
+                        <div class="stat-label">3rd Party</div>
+                        <div class="stat-value medium-accuracy">79%</div>
+                        <div class="accuracy-bar">
+                            <div class="accuracy-fill" style="width: 79%"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="dataset">
+                    <div class="dataset-name">VocalSOund</div>
+                    <div class="stat">
+                        <div class="stat-label">Samples</div>
+                        <div class="stat-value">21,000</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-label">Classes</div>
+                        <div class="stat-value">6</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-label">Hours</div>
+                        <div class="stat-value">23.33</div>
+                    </div>
+                    <div class="stat accuracy-stat">
+                        <div class="stat-label">Exp. Acc</div>
+                        <div class="stat-value high-accuracy">90.4%</div>
+                        <div class="accuracy-bar">
+                            <div class="accuracy-fill" style="width: 90.4%"></div>
+                        </div>
+                    </div>
+                    <div class="stat accuracy-stat">
+                        <div class="stat-label">3rd Party</div>
+                        <div class="stat-value high-accuracy">97.95%</div>
+                        <div class="accuracy-bar">
+                            <div class="accuracy-fill" style="width: 97.95%"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="category animal">
+            <div class="category-header">
+                <div class="category-icon">🐾</div>
+                <h2 class="category-title">Animal Sounds</h2>
+            </div>
+            <div class="datasets">
+                <div class="dataset">
+                    <div class="dataset-name">CatMeow</div>
+                    <div class="stat">
+                        <div class="stat-label">Samples</div>
+                        <div class="stat-value">440</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-label">Classes</div>
+                        <div class="stat-value">3</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-label">Hours</div>
+                        <div class="stat-value">0.3</div>
+                    </div>
+                    <div class="stat accuracy-stat">
+                        <div class="stat-label">Exp. Acc</div>
+                        <div class="stat-value medium-accuracy">70.8%</div>
+                        <div class="accuracy-bar">
+                            <div class="accuracy-fill" style="width: 70.8%"></div>
+                        </div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-label">3rd Party</div>
+                        <div class="stat-value">—</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="category environmental">
+            <div class="category-header">
+                <div class="category-icon">🌿</div>
+                <h2 class="category-title">Environmental Sounds</h2>
+            </div>
+            <div class="datasets">
+                <div class="dataset">
+                    <div class="dataset-name">ESC-50</div>
+                    <div class="stat">
+                        <div class="stat-label">Samples</div>
+                        <div class="stat-value">2,000</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-label">Classes</div>
+                        <div class="stat-value">50</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-label">Hours</div>
+                        <div class="stat-value">2.78</div>
+                    </div>
+                    <div class="stat accuracy-stat">
+                        <div class="stat-label">Exp. Acc</div>
+                        <div class="stat-value low-accuracy">46.8%</div>
+                        <div class="accuracy-bar">
+                            <div class="accuracy-fill" style="width: 46.8%"></div>
+                        </div>
+                    </div>
+                    <div class="stat accuracy-stat">
+                        <div class="stat-label">3rd Party</div>
+                        <div class="stat-value high-accuracy">99.1%</div>
+                        <div class="accuracy-bar">
+                            <div class="accuracy-fill" style="width: 99.1%"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="category urban">
+            <div class="category-header">
+                <div class="category-icon">🏙️</div>
+                <h2 class="category-title">Urban Sounds</h2>
+            </div>
+            <div class="datasets">
+                <div class="dataset">
+                    <div class="dataset-name">UrbanSound8k</div>
+                    <div class="stat">
+                        <div class="stat-label">Samples</div>
+                        <div class="stat-value">8,732</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-label">Classes</div>
+                        <div class="stat-value">10</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-label">Hours</div>
+                        <div class="stat-value">8.75</div>
+                    </div>
+                    <div class="stat accuracy-stat">
+                        <div class="stat-label">Exp. Acc</div>
+                        <div class="stat-value low-accuracy">49.2%</div>
+                        <div class="accuracy-bar">
+                            <div class="accuracy-fill" style="width: 49.2%"></div>
+                        </div>
+                    </div>
+                    <div class="stat accuracy-stat">
+                        <div class="stat-label">3rd Party</div>
+                        <div class="stat-value high-accuracy">98.05%</div>
+                        <div class="accuracy-bar">
+                            <div class="accuracy-fill" style="width: 98.05%"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="dataset">
+                    <div class="dataset-name">TAU2020</div>
+                    <div class="stat">
+                        <div class="stat-label">Samples</div>
+                        <div class="stat-value">23,047</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-label">Classes</div>
+                        <div class="stat-value">10</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-label">Hours</div>
+                        <div class="stat-value">64</div>
+                    </div>
+                    <div class="stat accuracy-stat">
+                        <div class="stat-label">Exp. Acc</div>
+                        <div class="stat-value low-accuracy">45%</div>
+                        <div class="accuracy-bar">
+                            <div class="accuracy-fill" style="width: 45%"></div>
+                        </div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-label">3rd Party</div>
+                        <div class="stat-value">—</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="legend">
+            <div class="legend-item">
+                <div class="legend-dot" style="background: #27ae60;"></div>
+                <span>High Accuracy (≥80%)</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-dot" style="background: #f39c12;"></div>
+                <span>Medium Accuracy (60-79%)</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-dot" style="background: #e74c3c;"></div>
+                <span>Low Accuracy (<60%)</span>
+            </div>
+        </div>
+    </div>
+
+   
+    <div id="imageSelector" class="image-selector">
+        <span class="selector-close">&times;</span>
+        <div class="selector-content">
+            <h3 class="selector-title">Select image type</h3>
+            <div class="selector-buttons">
+                <button class="selector-btn" onclick="openImage('results')">
+                    📊 Results
+                </button>
+                <button class="selector-btn" onclick="openImage('data')">
+                    📈 Data Representation
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Модальное окно для изображений -->
+    <div id="imageModal" class="modal">
+        <span class="modal-close">&times;</span>
+        <img class="modal-content" id="modalImage">
+    </div>
+
+    <script>
+        // Hover эффекты для статистики
+        document.querySelectorAll('.stat').forEach(stat => {
+            stat.addEventListener('mouseenter', function() {
+                this.style.transform = 'scale(1.05)';
+            });
+            stat.addEventListener('mouseleave', function() {
+                this.style.transform = 'scale(1)';
+            });
+        });
+
+        // Маппинг названий датасетов к файлам изображений
+        const datasetImages = {
+            'Spiking Heidelberg Digits (10)': {
+                results: 'shd10_results.png',
+                data: 'shd10_data.png'
+            },
+            'Spiking Heidelberg Digits (20)': {
+                results: 'shd20_results.png',
+                data: 'shd20_data.png'
+            },
+            'EmoDB': {
+                results: 'emodb_results.png',
+                data: 'emodb_data.png'
+            },
+            'Nonspeech7k': {
+                results: 'nonspeech7k_results.png',
+                data: 'nonspeech7k_data.png'
+            },
+            'VocalSOund': {
+                results: 'vocalsound_results.png',
+                data: 'vocalsound_data.png'
+            },
+            'CatMeow': {
+                results: 'catmeow_results.png',
+                data: 'catmeow_data.png'
+            },
+            'ESC-50': {
+                results: 'esc50_results.png',
+                data: 'esc50_data.png'
+            },
+            'UrbanSound8k': {
+                results: 'urbansound8k_results.png',
+                data: 'urbansound8k_data.png'
+            },
+            'TAU2020': {
+                results: 'tau2020_results.png',
+                data: 'tau2020_data.png'
+            }
+        };
+
+        let currentDataset = null;
+
+        // Обработчики кликов для открытия меню выбора
+        document.querySelectorAll('.dataset').forEach(dataset => {
+            dataset.addEventListener('click', function() {
+                const datasetName = this.querySelector('.dataset-name').textContent;
+                
+                if (datasetImages[datasetName]) {
+                    currentDataset = datasetName;
+                    document.getElementById('imageSelector').style.display = 'block';
+                }
+            });
+        });
+
+        // Функция открытия изображения выбранного типа
+        function openImage(type) {
+            if (currentDataset && datasetImages[currentDataset]) {
+                const imageName = datasetImages[currentDataset][type];
+                if (imageName) {
+                    document.getElementById('imageSelector').style.display = 'none';
+                    
+                    const modal = document.getElementById('imageModal');
+                    const modalImg = document.getElementById('modalImage');
+                    modal.style.display = 'block';
+                    modalImg.src = imageName;
+                    modalImg.alt = currentDataset + ' - ' + (type === 'results' ? 'Results' : 'Data Representation');
+                }
+            }
+        }
+
+        // Закрытие меню выбора по крестику
+        document.querySelector('.selector-close').addEventListener('click', function() {
+            document.getElementById('imageSelector').style.display = 'none';
+            currentDataset = null;
+        });
+
+        // Закрытие меню выбора по клику на фон
+        document.getElementById('imageSelector').addEventListener('click', function(e) {
+            if (e.target === this) {
+                this.style.display = 'none';
+                currentDataset = null;
+            }
+        });
+
+        // Закрытие модального окна по крестику
+        document.querySelector('.modal-close').addEventListener('click', function() {
+            document.getElementById('imageModal').style.display = 'none';
+        });
+
+        // Закрытие модального окна по клику на фон
+        document.getElementById('imageModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                this.style.display = 'none';
+            }
+        });
+
+        // Закрытие модального окна и меню выбора по клавише Escape
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                document.getElementById('imageModal').style.display = 'none';
+                document.getElementById('imageSelector').style.display = 'none';
+                currentDataset = null;
+            }
+        });
+
+        // Анимация чисел при загрузке
+        function animateValue(element, start, end, duration) {
+            const range = end - start;
+            const increment = range / (duration / 16);
+            let current = start;
+            
+            const timer = setInterval(() => {
+                current += increment;
+                if ((increment > 0 && current >= end) || (increment < 0 && current <= end)) {
+                    element.textContent = end % 1 === 0 ? end : end.toFixed(1);
+                    if (element.textContent !== '—') {
+                        element.textContent += '%';
+                    }
+                    clearInterval(timer);
+                } else {
+                    element.textContent = (current % 1 === 0 ? current : current.toFixed(1)) + '%';
+                }
+            }, 16);
+        }
+
+        // Запуск анимации процентов точности
+        setTimeout(() => {
+            document.querySelectorAll('.accuracy-stat .stat-value').forEach(el => {
+                if (el.textContent !== '—') {
+                    const value = parseFloat(el.textContent);
+                    el.textContent = '0%';
+                    animateValue(el, 0, value, 1000);
+                }
+            });
+        }, 500);
+    </script>
+</body>
+</html>
